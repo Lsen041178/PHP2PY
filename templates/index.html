@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHP to Python AI Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/monaco-editor@0.45.0/min/vs/loader.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3">
+                        <img src="static/infiniti.png" alt="Logo" class="infiniti-logo object-contain">
+                        <h1 class="text-xl font-bold">PHP ➡️ Python AI Converter</h1>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Help Button -->
+                    <button id="help-btn" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" title="Help">
+                        <i class="fas fa-question-circle text-lg"></i>
+                    </button>
+                    <!-- Theme Toggle -->
+                    <button id="theme-toggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:inline"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- API Settings Panel -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+            <div class="p-6">
+                <h2 class="text-lg font-semibold mb-6 flex items-center">
+                    <i class="fas fa-cog mr-2 text-primary-600"></i>
+                    AI API Settings
+                </h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                    <div class="lg:col-span-2">
+                        <label for="base-url" class="block text-sm font-medium mb-2">Base URL</label>
+                        <input type="text" id="base-url" placeholder="https://api.openai.com" 
+                               class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700">
+                        <div class="flex flex-wrap gap-2 mt-3">
+                            <button type="button" onclick="document.getElementById('base-url').value='https://api.openai.com'" class="text-xs px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors font-medium">OpenAI</button>
+                            <button type="button" onclick="document.getElementById('base-url').value='https://api.anthropic.com'" class="text-xs px-3 py-1.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-md hover:bg-green-200 dark:hover:bg-green-800 transition-colors font-medium">Anthropic</button>
+                            <button type="button" onclick="document.getElementById('base-url').value='https://generativelanguage.googleapis.com'" class="text-xs px-3 py-1.5 bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 rounded-md hover:bg-yellow-200 dark:hover:bg-yellow-800 transition-colors font-medium">Gemini</button>
+                            <button type="button" onclick="document.getElementById('base-url').value='https://api.groq.com'" class="text-xs px-3 py-1.5 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-md hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors font-medium">Groq</button>
+                        </div>
+                    </div>
+                    
+                    <div class="lg:col-span-2">
+                        <label for="api-key" class="block text-sm font-medium mb-2">API Key</label>
+                        <input type="password" id="api-key" placeholder="sk-..." 
+                               class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700">
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <button id="connect-btn" class="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 text-white px-4 py-2.5 rounded-md transition-all duration-200 font-medium">
+                            <i class="fas fa-plug mr-2"></i>
+                            <span id="connect-btn-text">Connect</span>
+                        </button>
+                        <div class="relative">
+                            <select id="model-select" disabled class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                                <option value="">Select Model</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                            </div>
+                            <div id="model-loading" class="absolute inset-0 bg-white dark:bg-gray-700 rounded-md hidden items-center justify-center">
+                                <i class="fas fa-spinner fa-spin text-primary-600 mr-2"></i>
+                                <span class="text-sm text-gray-600 dark:text-gray-400">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="connection-status" class="mt-4 hidden">
+                    <div class="flex items-center text-sm">
+                        <i class="fas fa-circle mr-2"></i>
+                        <span id="status-text"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Editors -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- PHP Editor -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold flex items-center">
+                            <i class="fab fa-php mr-2 text-blue-600"></i>
+                            PHP Code
+                        </h3>
+                        <div class="flex space-x-2">
+                            <button id="explain-php-btn" class="bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 text-blue-800 dark:text-blue-200 px-3 py-1 rounded text-sm transition-colors">
+                                <i class="fas fa-lightbulb mr-1"></i>Explain
+                            </button>
+                            <button id="analyze-php-security-btn" class="bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 text-red-800 dark:text-red-200 px-3 py-1 rounded text-sm transition-colors">
+                                <i class="fas fa-shield-alt mr-1"></i>Security
+                            </button>
+                            <label for="file-upload" class="cursor-pointer bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 text-green-800 dark:text-green-200 px-3 py-1 rounded text-sm transition-colors">
+                                <i class="fas fa-upload mr-1"></i>Upload
+                            </label>
+                            <input type="file" id="file-upload" accept=".php,.txt" class="hidden">
+                            <button id="clear-php" class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-1 rounded text-sm transition-colors">
+                                <i class="fas fa-trash mr-1"></i>Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="h-96">
+                    <div id="php-editor" class="w-full h-full"></div>
+                </div>
+                <div class="p-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 rounded-b-lg">
+                    <div class="flex justify-between items-center">
+                        <div class="flex space-x-2">
+                            <button id="fullscreen-php-btn" class="bg-white dark:bg-gray-600 hover:bg-gray-100 dark:hover:bg-gray-500 px-3 py-1.5 rounded text-sm transition-colors border border-gray-300 dark:border-gray-500" title="Full Screen">
+                                <i class="fas fa-expand mr-1"></i>Full Screen
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button id="generate-php-tests" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-sm transition-colors">
+                                <i class="fas fa-vial mr-1"></i>Generate Tests
+                            </button>
+                            <button id="download-php" class="bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 rounded text-sm transition-colors">
+                                <i class="fas fa-download mr-1"></i>Download
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Python Editor -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold flex items-center">
+                            <i class="fab fa-python mr-2 text-yellow-600"></i>
+                            Python Code
+                        </h3>
+                        <div class="flex space-x-2">
+                            <button id="explain-python-btn" disabled class="bg-yellow-100 dark:bg-yellow-900 hover:bg-yellow-200 dark:hover:bg-yellow-800 text-yellow-800 dark:text-yellow-200 px-3 py-1 rounded text-sm transition-colors disabled:opacity-50">
+                                <i class="fas fa-lightbulb mr-1"></i>Explain
+                            </button>
+                            <button id="analyze-python-security-btn" disabled class="bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 text-red-800 dark:text-red-200 px-3 py-1 rounded text-sm transition-colors disabled:opacity-50">
+                                <i class="fas fa-shield-alt mr-1"></i>Security
+                            </button>
+                            <button id="clear-python" class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-1 rounded text-sm transition-colors">
+                                <i class="fas fa-trash mr-1"></i>Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="h-96">
+                    <div id="python-editor" class="w-full h-full"></div>
+                </div>
+                <div class="p-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 rounded-b-lg">
+                    <div class="flex justify-between items-center">
+                        <div class="flex space-x-2">
+                            <button id="fullscreen-python-btn" class="bg-white dark:bg-gray-600 hover:bg-gray-100 dark:hover:bg-gray-500 px-3 py-1.5 rounded text-sm transition-colors border border-gray-300 dark:border-gray-500" title="Full Screen">
+                                <i class="fas fa-expand mr-1"></i>Full Screen
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button id="generate-python-tests" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-sm transition-colors">
+                                <i class="fas fa-vial mr-1"></i>Generate Tests
+                            </button>
+                            <button id="download-py" disabled class="bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 rounded text-sm transition-colors disabled:opacity-50 disabled:bg-gray-400">
+                                <i class="fas fa-download mr-1"></i>Download
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Convert Controls -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+            <div class="p-6">
+                <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="apply-security" checked class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                            <span class="text-sm">Apply Security Fixes</span>
+                        </label>
+                    </div>
+                    
+                    <button id="convert-btn" disabled class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-md transition-colors flex items-center">
+                        <i class="fas fa-magic mr-2"></i>Convert to Python
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Issues Panel -->
+        <div id="security-issues-panel" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-red-200 dark:border-red-700 mb-6 hidden">
+            <div class="p-4 border-b border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="flex items-center justify-center w-8 h-8 bg-red-100 dark:bg-red-800 rounded-full">
+                            <i class="fas fa-shield-alt text-red-600 dark:text-red-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-red-900 dark:text-red-100">Security Issues Found</h3>
+                            <p id="security-panel-summary" class="text-sm text-red-700 dark:text-red-300">Click on each issue to see details and apply fixes</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button id="apply-all-fixes-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors flex items-center">
+                            <i class="fas fa-tools mr-2"></i>Apply All Fixes
+                        </button>
+                        <button id="close-security-panel" class="text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div id="security-issues-list" class="space-y-4">
+                    <!-- Security issues will be populated here -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 flex items-center space-x-4">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <span id="loading-text">Processing...</span>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Code Explanation Modal -->
+    <div id="explanation-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center space-x-3">
+                    <div id="modal-icon" class="w-10 h-10 rounded-full flex items-center justify-center">
+                        <!-- Dynamic icon will be inserted here -->
+                    </div>
+                    <div>
+                        <h3 id="modal-title" class="text-xl font-bold text-gray-900 dark:text-white"></h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Easy-to-understand explanation</p>
+                    </div>
+                </div>
+                <button id="close-modal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="p-6 overflow-y-auto max-h-[70vh]">
+                <div id="explanation-content" class="space-y-6">
+                    <!-- Loading state -->
+                    <div id="explanation-loading" class="text-center py-8">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                        <p class="mt-4 text-gray-600 dark:text-gray-400">Analyzing your code...</p>
+                    </div>
+                    
+                    <!-- Explanation will be inserted here -->
+                    <div id="explanation-text" class="hidden prose prose-lg dark:prose-invert max-w-none">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Explanation generated for non-technical users
+                </div>
+                <div class="flex space-x-3">
+                    <button id="copy-explanation" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-copy mr-2"></i>Copy Explanation
+                    </button>
+                    <button id="download-explanation" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-download mr-2"></i>Download
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Report Modal -->
+    <div id="sec-analysis-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" style="display: none;">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-red-900/20">
+                <div class="flex items-center space-x-3">
+                    <div id="sec-modal-icon" class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-800 flex items-center justify-center">
+                        <i class="fas fa-shield-alt text-red-600 dark:text-red-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 id="sec-modal-title" class="text-xl font-bold text-gray-900 dark:text-white">Security Analysis Report</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Vulnerability assessment and recommendations</p>
+                    </div>
+                </div>
+                <button id="close-sec-modal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-2">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div class="p-6 overflow-y-auto max-h-[70vh]">
+                <!-- Loading state -->
+                <div id="sec-loading" class="text-center py-12" style="display: none;">
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+                    <p class="mt-4 text-gray-600 dark:text-gray-400 text-lg">Analyzing security vulnerabilities...</p>
+                </div>
+                
+                <!-- Security report content -->
+                <div id="sec-report-display" class="space-y-6">
+                    <!-- Report content will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Security analysis powered by AI
+                </div>
+                <div class="flex space-x-3">
+                    <button id="copy-sec-report" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-copy mr-2"></i>Copy Report
+                    </button>
+                    <button id="apply-sec-fixes" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-tools mr-2"></i>Apply Fixes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Screen Editor Modal -->
+    <div id="fullscreen-modal" class="fixed inset-0 bg-black bg-opacity-95 z-50 hidden">
+        <div class="h-full w-full flex flex-col">
+            <!-- Modal Header -->
+            <div class="bg-gray-800 text-white p-4 flex justify-between items-center">
+                <h3 id="fullscreen-title" class="text-xl font-semibold flex items-center">
+                    <i id="fullscreen-icon" class="fab fa-php mr-2"></i>
+                    <span id="fullscreen-lang">PHP</span> Full Screen Editor
+                </h3>
+                <button id="close-fullscreen" class="text-white hover:text-gray-300 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- Full Screen Editor Container -->
+            <div class="flex-1 p-4">
+                <div id="fullscreen-editor" class="w-full h-full rounded-lg border border-gray-600"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xl">
+            <div class="flex items-center space-x-3">
+                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+                <span id="loading-text" class="text-lg">Processing...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Test Case Modal -->
+    <div id="test-case-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+                            <i class="fas fa-vial text-green-600 mr-3"></i>
+                            Generated Test Cases
+                        </h2>
+                        <button id="close-test-modal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="p-6">
+                    <div class="mb-4">
+                        <p class="text-gray-600 dark:text-gray-300 mb-4">
+                            <span id="test-language-type">PHP</span> test cases have been generated for your code. You can copy or download them to use in your testing environment.
+                        </p>
+                    </div>
+                    
+                    <div class="bg-gray-900 rounded-lg p-4 mb-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-green-400 font-mono text-sm" id="test-filename">test_code.php</span>
+                            <div class="flex space-x-2">
+                                <button id="copy-test-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm transition-colors">
+                                    <i class="fas fa-copy mr-1"></i>Copy Test Case
+                                </button>
+                                <button id="download-test-btn" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-sm transition-colors">
+                                    <i class="fas fa-download mr-1"></i>Download Test Case
+                                </button>
+                            </div>
+                        </div>
+                        <pre id="test-code-content" class="text-green-400 font-mono text-sm overflow-x-auto whitespace-pre-wrap">Loading test cases...</pre>
+                    </div>
+                    
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        <h3 class="font-semibold text-gray-900 dark:text-white mb-2">
+                            <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                            How to Use These Test Cases
+                        </h3>
+                        <ul class="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                            <li id="test-instruction-1">• Copy the test cases to your testing environment</li>
+                            <li id="test-instruction-2">• Run the tests to verify your code functionality</li>
+                            <li id="test-instruction-3">• Modify test parameters as needed for your specific use case</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+                            <i class="fas fa-question-circle text-primary-600 mr-3"></i>
+                            How to Use PHP to Python Converter
+                        </h2>
+                        <button id="close-help-modal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="p-6 space-y-8">
+                    <!-- Step 1: API Setup -->
+                    <div class="border-l-4 border-blue-500 pl-6">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                            <span class="bg-blue-500 text-white rounded-full w-8 h-8 inline-flex items-center justify-center text-sm font-bold mr-3">1</span>
+                            Set Up AI API
+                        </h3>
+                        <p class="text-gray-600 dark:text-gray-300 mb-4">Connect to an AI service to enable code conversion:</p>
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                            <ul class="space-y-2 text-sm">
+                                <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i>Choose your preferred AI service (OpenAI, Anthropic, Gemini, or Groq)</li>
+                                <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i>Enter the API base URL (or click quick buttons)</li>
+                                <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i>Provide your API key</li>
+                                <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i>Click "Connect" and select a model</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Add PHP Code -->
+                    <div class="border-l-4 border-green-500 pl-6">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                            <span class="bg-green-500 text-white rounded-full w-8 h-8 inline-flex items-center justify-center text-sm font-bold mr-3">2</span>
+                            Add Your PHP Code
+                        </h3>
+                        <p class="text-gray-600 dark:text-gray-300 mb-4">Input your PHP code using any of these methods:</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                <i class="fas fa-keyboard text-blue-600 text-xl mb-2"></i>
+                                <h4 class="font-semibold text-gray-900 dark:text-white">Type Directly</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Write or paste your PHP code in the left editor</p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                <i class="fas fa-upload text-green-600 text-xl mb-2"></i>
+                                <h4 class="font-semibold text-gray-900 dark:text-white">Upload File</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Click "Upload" to import a .php file</p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                <i class="fas fa-copy text-purple-600 text-xl mb-2"></i>
+                                <h4 class="font-semibold text-gray-900 dark:text-white">Copy & Paste</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Copy PHP code from anywhere and paste it</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Example -->
+                    <div class="border-l-4 border-yellow-500 pl-6">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                            <span class="bg-yellow-500 text-white rounded-full w-8 h-8 inline-flex items-center justify-center text-sm font-bold mr-3">3</span>
+                            Example PHP Code
+                        </h3>
+                        <p class="text-gray-600 dark:text-gray-300 mb-4">Here's a sample PHP code you can try:</p>
+                        <div class="bg-gray-900 rounded-lg p-4 text-green-400 font-mono text-sm overflow-x-auto">
+                            <pre>&lt;?php
+class UserManager {
+    private $pdo;
+    
+    public function __construct($database) {
+        $this->pdo = new PDO($database);
+    }
+    
+    public function createUser($username, $email) {
+        $stmt = $this->pdo->prepare("INSERT INTO users (username, email) VALUES (?, ?)");
+        return $stmt->execute([$username, $email]);
+    }
+    
+    public function getUser($id) {
+        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE id = ?");
+        $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+}
+
+$userManager = new UserManager("mysql:host=localhost;dbname=mydb");
+$user = $userManager->getUser(1);
+echo json_encode($user);
+?&gt;</pre>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Security & Features -->
+                    <div class="border-l-4 border-red-500 pl-6">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                            <span class="bg-red-500 text-white rounded-full w-8 h-8 inline-flex items-center justify-center text-sm font-bold mr-3">4</span>
+                            Security Analysis & Features
+                        </h3>
+                        <p class="text-gray-600 dark:text-gray-300 mb-4">Use these powerful features to improve your code:</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                                <i class="fas fa-shield-alt text-red-600 text-xl mb-2"></i>
+                                <h4 class="font-semibold text-gray-900 dark:text-white">Security Analysis</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Click "Security" to find vulnerabilities and get automatic fixes</p>
+                            </div>
+                            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                                <i class="fas fa-lightbulb text-blue-600 text-xl mb-2"></i>
+                                <h4 class="font-semibold text-gray-900 dark:text-white">Code Explanation</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Click "Explain" to understand what your code does</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 5: Convert -->
+                    <div class="border-l-4 border-purple-500 pl-6">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                            <span class="bg-purple-500 text-white rounded-full w-8 h-8 inline-flex items-center justify-center text-sm font-bold mr-3">5</span>
+                            Convert to Python
+                        </h3>
+                        <p class="text-gray-600 dark:text-gray-300 mb-4">Transform your PHP code to Python:</p>
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                            <ul class="space-y-2 text-sm">
+                                <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i>Keep "Apply Security Fixes" checked for safer code</li>
+                                <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i>Click "Convert to Python" button</li>
+                                <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i>Review the generated Python code in the right editor</li>
+                                <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i>Download your converted code using the "Download" button</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Expected Result -->
+                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg p-6">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                            <i class="fas fa-magic text-purple-600 mr-3"></i>
+                            Expected Python Result
+                        </h3>
+                        <p class="text-gray-600 dark:text-gray-300 mb-4">The above PHP example will be converted to clean Python code like this:</p>
+                        <div class="bg-gray-900 rounded-lg p-4 text-green-400 font-mono text-sm overflow-x-auto">
+                            <pre>import sqlite3
+from typing import Optional, Dict, Any
+
+class UserManager:
+    def __init__(self, database: str):
+        self.connection = sqlite3.connect(database)
+        self.connection.row_factory = sqlite3.Row
+    
+    def create_user(self, username: str, email: str) -> bool:
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute("INSERT INTO users (username, email) VALUES (?, ?)", 
+                         (username, email))
+            self.connection.commit()
+            return True
+        except Exception:
+            return False
+    
+    def get_user(self, user_id: int) -> Optional[Dict[str, Any]]:
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+        result = cursor.fetchone()
+        return dict(result) if result else None
+
+# Usage
+user_manager = UserManager("mydb.sqlite")
+user = user_manager.get_user(1)
+print(json.dumps(user) if user else "User not found")</pre>
+                        </div>
+                    </div>
+
+                    <!-- Tips -->
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                            <i class="fas fa-lightbulb text-yellow-600 mr-2"></i>
+                            Pro Tips
+                        </h3>
+                        <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                            <li class="flex items-start"><i class="fas fa-star text-yellow-500 mr-2 mt-1"></i>Use Full Screen mode for better editing experience</li>
+                            <li class="flex items-start"><i class="fas fa-star text-yellow-500 mr-2 mt-1"></i>Always run security analysis before converting sensitive code</li>
+                            <li class="flex items-start"><i class="fas fa-star text-yellow-500 mr-2 mt-1"></i>Test your converted Python code in a proper environment</li>
+                            <li class="flex items-start"><i class="fas fa-star text-yellow-500 mr-2 mt-1"></i>Switch between light and dark themes using the theme toggle</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/monaco-config.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    
+    <script>
+        // Help modal functionality
+        document.getElementById('help-btn').addEventListener('click', function() {
+            document.getElementById('help-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        });
+        
+        document.getElementById('close-help-modal').addEventListener('click', function() {
+            document.getElementById('help-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        });
+        
+        // Close modal when clicking outside
+        document.getElementById('help-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+        });
+        
+        // Test case modal functionality
+        document.getElementById('close-test-modal').addEventListener('click', function() {
+            document.getElementById('test-case-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        });
+        
+        document.getElementById('test-case-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+        });
+        
+        // Test case generation functionality
+        let currentTestContent = '';
+        let currentTestLanguage = '';
+        
+        document.getElementById('generate-php-tests').addEventListener('click', function() {
+            generateTestCases('php');
+        });
+        
+        document.getElementById('generate-python-tests').addEventListener('click', function() {
+            generateTestCases('python');
+        });
+        
+        async function generateTestCases(language) {
+            const btn = document.getElementById(`generate-${language}-tests`);
+            const originalText = btn.innerHTML;
+            
+            // Show loading state
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Generating...';
+            btn.disabled = true;
+            
+            try {
+                let code = '';
+                
+                // Get code from Monaco editors using the MonacoManager instance
+                if (language === 'php') {
+                    if (window.monacoManager && window.monacoManager.phpEditor) {
+                        code = window.monacoManager.phpEditor.getValue();
+                    }
+                } else if (language === 'python') {
+                    if (window.monacoManager && window.monacoManager.pythonEditor) {
+                        code = window.monacoManager.pythonEditor.getValue();
+                    }
+                }
+                
+                if (!code.trim()) {
+                    alert('Please add some code first before generating tests.');
+                    return;
+                }
+                
+                // Get selected model
+                const modelSelect = document.getElementById('model-select');
+                const selectedModel = modelSelect ? modelSelect.value : 'gemini-2.0-flash';
+                
+                const response = await fetch('/api/generate-tests', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        language: language,
+                        model: selectedModel
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showTestCaseModal(data.testCases, language);
+                } else {
+                    alert('Error generating tests: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error generating tests: ' + error.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+        
+        function showTestCaseModal(testCases, language) {
+            currentTestContent = testCases;
+            currentTestLanguage = language;
+            
+            // Update modal content
+            document.getElementById('test-language-type').textContent = language.toUpperCase();
+            document.getElementById('test-filename').textContent = `test_code.${language === 'php' ? 'php' : 'py'}`;
+            document.getElementById('test-code-content').textContent = testCases;
+            
+            // Update instructions based on language
+            if (language === 'php') {
+                document.getElementById('test-instruction-1').textContent = '• Copy the PHPUnit test cases to your PHP project';
+                document.getElementById('test-instruction-2').textContent = '• Run with: vendor/bin/phpunit test_code.php';
+                document.getElementById('test-instruction-3').textContent = '• Install PHPUnit if not already available';
+            } else {
+                document.getElementById('test-instruction-1').textContent = '• Copy the pytest test cases to your Python project';
+                document.getElementById('test-instruction-2').textContent = '• Run with: pytest test_code.py';
+                document.getElementById('test-instruction-3').textContent = '• Install pytest if not already available';
+            }
+            
+            // Show modal
+            document.getElementById('test-case-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // Copy test case functionality
+        document.getElementById('copy-test-btn').addEventListener('click', function() {
+            navigator.clipboard.writeText(currentTestContent).then(function() {
+                const btn = document.getElementById('copy-test-btn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check mr-1"></i>Copied!';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                }, 2000);
+            }).catch(function() {
+                alert('Failed to copy to clipboard');
+            });
+        });
+        
+        // Download test case functionality
+        document.getElementById('download-test-btn').addEventListener('click', function() {
+            const extension = currentTestLanguage === 'php' ? 'php' : 'py';
+            const filename = `test_code.${extension}`;
+            
+            const blob = new Blob([currentTestContent], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        });
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const helpModal = document.getElementById('help-modal');
+                const testModal = document.getElementById('test-case-modal');
+                
+                if (!helpModal.classList.contains('hidden')) {
+                    helpModal.classList.add('hidden');
+                    document.body.style.overflow = 'auto';
+                } else if (!testModal.classList.contains('hidden')) {
+                    testModal.classList.add('hidden');
+                    document.body.style.overflow = 'auto';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
